@@ -1,11 +1,114 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <title>Mi Página Web</title>
+  <meta charset="UTF-8" />
+  <title>Gestión de Inventario</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; }
+    h1 { text-align: center; }
+    form { margin-bottom: 20px; }
+    input, button { padding: 8px; margin: 5px 0; width: 100%; max-width: 300px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    button.edit, button.delete { width: auto; margin-right: 5px; }
+    .low-stock { background-color: #ffcccc; }
+  </style>
 </head>
 <body>
-    <h1>¡Hola, Nicolás!</h1>
-    <p>Esta es mi página web básica alojada gratis en GitHub Pages.</p>
+
+<h1>Gestión de Inventario</h1>
+
+<form id="productoForm">
+  <input type="text" id="nombre" placeholder="Nombre del producto" required />
+  <input type="number" id="cantidad" placeholder="Cantidad" required min="0" />
+  <input type="text" id="ubicacion" placeholder="Ubicación" />
+  <button type="submit">Agregar / Actualizar Producto</button>
+</form>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Cantidad</th>
+      <th>Ubicación</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody id="tablaProductos">
+    <!-- Productos aquí -->
+  </tbody>
+</table>
+
+<script>
+  const form = document.getElementById('productoForm');
+  const tabla = document.getElementById('tablaProductos');
+
+  // Cargar productos desde localStorage
+  let productos = JSON.parse(localStorage.getItem('productos')) || [];
+
+  function guardarProductos() {
+    localStorage.setItem('productos', JSON.stringify(productos));
+  }
+
+  function mostrarProductos() {
+    tabla.innerHTML = '';
+    productos.forEach((prod, index) => {
+      const tr = document.createElement('tr');
+      if (prod.cantidad <= 5) tr.classList.add('low-stock'); // alerta stock bajo
+      tr.innerHTML = `
+        <td>${prod.nombre}</td>
+        <td>${prod.cantidad}</td>
+        <td>${prod.ubicacion}</td>
+        <td>
+          <button class="edit" onclick="editarProducto(${index})">Editar</button>
+          <button class="delete" onclick="eliminarProducto(${index})">Eliminar</button>
+        </td>
+      `;
+      tabla.appendChild(tr);
+    });
+  }
+
+  function agregarProducto(e) {
+    e.preventDefault();
+    const nombre = document.getElementById('nombre').value.trim();
+    const cantidad = parseInt(document.getElementById('cantidad').value);
+    const ubicacion = document.getElementById('ubicacion').value.trim();
+
+    const index = productos.findIndex(p => p.nombre.toLowerCase() === nombre.toLowerCase());
+    if (index >= 0) {
+      // Actualizar producto existente
+      productos[index].cantidad = cantidad;
+      productos[index].ubicacion = ubicacion;
+    } else {
+      // Agregar nuevo producto
+      productos.push({ nombre, cantidad, ubicacion });
+    }
+
+    guardarProductos();
+    mostrarProductos();
+    form.reset();
+  }
+
+  function editarProducto(index) {
+    const prod = productos[index];
+    document.getElementById('nombre').value = prod.nombre;
+    document.getElementById('cantidad').value = prod.cantidad;
+    document.getElementById('ubicacion').value = prod.ubicacion;
+  }
+
+  function eliminarProducto(index) {
+    if(confirm('¿Estás seguro de eliminar este producto?')) {
+      productos.splice(index, 1);
+      guardarProductos();
+      mostrarProductos();
+    }
+  }
+
+  form.addEventListener('submit', agregarProducto);
+
+  // Mostrar productos al cargar la página
+  mostrarProductos();
+</script>
+
 </body>
 </html>
